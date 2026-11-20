@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Agent – talk to all your AI tools</title>
+  <meta name="description" content="Voice Agent is a desktop AI assistant. Hold a key, talk, and it works across your email, calendar, files and AI tools." />
+  <link rel="icon" href="assets/icon.png" />
+  <script>
+    // Apply the saved theme before the page paints, to avoid a flash.
+    try {
+      const t = localStorage.getItem('va-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  <style>
+    :root {
+      --accent: #0fd2f9;
+      --accent-hover: #0ebdd9;
+      --on-accent: #0b0d10;
+      --bg: #0b0e12;
+      --bg-2: #11161c;
+      --panel: #151b22;
+      --border: #242c35;
+      --text: #e9eef3;
+      --muted: #96a2ae;
+      --link: #0fd2f9;
+      --glow: rgba(15, 210, 249, 0.18);
+      color-scheme: dark;
+    }
+    :root[data-theme='light'] {
+      --bg: #f6f9fb;
+      --bg-2: #ffffff;
+      --panel: #ffffff;
+      --border: #dde4ea;
+      --text: #0f141a;
+      --muted: #56626e;
+      --link: #08788f;
+      --glow: rgba(15, 210, 249, 0.22);
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme='dark']):not([data-theme='light']) {
+        --bg: #f6f9fb;
+        --bg-2: #ffffff;
+        --panel: #ffffff;
+        --border: #dde4ea;
+        --text: #0f141a;
+        --muted: #56626e;
+        --link: #08788f;
+        --glow: rgba(15, 210, 249, 0.22);
+        color-scheme: light;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+    a { color: var(--link); }
+    .wrap { width: min(1120px, 100% - 32px); margin: 0 auto; }
+
+    /* Nav */
+    nav { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg) 82%, transparent); border-bottom: 1px solid var(--border); }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 12px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
+    .logo img { width: 30px; height: 30px; border-radius: 8px; }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a.plain { color: var(--muted); text-decoration: none; font-size: 15px; }
+    .nav-links a.plain:hover { color: var(--text); }
+    .theme-toggle { background: var(--panel); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; width: 38px; height: 38px; cursor: pointer; display: grid; place-items: center; }
+
+    .btn { display: inline-flex; align-items: center; gap: 10px; border-radius: 10px; padding: 12px 20px;
+      font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; border: 1px solid transparent; }
+    .btn-primary { background: var(--accent); color: var(--on-accent); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary[aria-disabled='true'] { opacity: .55; pointer-events: none; }
+    .btn-ghost { border-color: var(--border); color: var(--text); background: var(--panel); }
+    .btn-small { padding: 8px 14px; font-size: 14px; }
+
+    /* Hero */
+    .hero { position: relative; padding: 88px 0 40px; text-align: center; }
+    .hero::before { content: ''; position: absolute; inset: -120px 0 auto; height: 520px; z-index: -1;
+      background: radial-gradient(600px 300px at 50% 30%, var(--glow), transparent 70%); }
+    .eyebrow { display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+      color: var(--link); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+      padding: 4px 12px; border-radius: 99px; margin-bottom: 20px; }
+    h1 { font-size: clamp(36px, 6vw, 62px); line-height: 1.08; margin: 0 auto 18px; max-width: 820px; letter-spacing: -0.02em; }
+    h1 span { color: var(--link); }
+    .lead { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 32px; }
+    .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .release-note { margin-top: 14px; font-size: 14px; color: var(--muted); min-height: 22px; }
+
+    /* App mock */
+    .mock { margin: 56px auto 0; max-width: 720px; text-align: left; background: var(--panel); border: 1px solid var(--border);
+      border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.28), 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent); overflow: hidden; }
+    .mock-input { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); font-size: 18px; }
+    .mic { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); flex: none; display: grid; place-items: center; }
+    .mic svg { width: 16px; height: 16px; }
+    .wave { display: flex; gap: 3px; align-items: center; margin-left: auto; }
+    .wave i { width: 3px; border-radius: 2px; background: var(--accent); animation: wave 1s ease-in-out infinite; }
+    .wave i:nth-child(1) { height: 10px; } .wave i:nth-child(2) { height: 18px; animation-delay: .1s; }
+    .wave i:nth-child(3) { height: 12px; animation-delay: .2s; } .wave i:nth-child(4) { height: 20px; animation-delay: .3s; }
+    .wave i:nth-child(5) { height: 9px; animation-delay: .4s; }
+    @keyframes wave { 50% { transform: scaleY(.4); } }
+    @media (prefers-reduced-motion: reduce) { .wave i { animation: none; } }
+    .mock-body { padding: 18px; display: grid; gap: 12px; font-size: 15px; }
+    .bubble { padding: 10px 14px; border-radius: 12px; max-width: 88%; }
+    .bubble.user { justify-self: end; background: color-mix(in srgb, var(--accent) 18%, var(--panel)); }
+    .bubble.bot { background: var(--bg-2); border: 1px solid var(--border); }
+    .confirm { border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--border)); border-radius: 12px; padding: 12px 14px; }
+    .confirm small { color: var(--muted); display: block; margin-bottom: 6px; }
+    .confirm .row { display: flex; gap: 8px; margin-top: 10px; }
+
+    /* Sections */
+    section { padding: 80px 0; }
+    h2 { font-size: clamp(28px, 4vw, 38px); margin: 0 0 12px; text-align: center; letter-spacing: -0.01em; }
+    .section-lead { text-align: center; color: var(--muted); max-width: 620px; margin: 0 auto 44px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+    .card h3 { margin: 12px 0 6px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+    .icon { width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center;
+      background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--link); }
+    .icon svg { width: 22px; height: 22px; }
+    .tools { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 820px; margin: 0 auto; }
+    .tool { padding: 8px 16px; border: 1px solid var(--border); background: var(--panel); border-radius: 99px; font-weight: 550; }
+    .tool.soon { color: var(--muted); border-style: dashed; }
+    .steps { counter-reset: step; }
+    .steps .card::before { counter-increment: step; content: counter(step); display: grid; place-items: center;
+      width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; }
+    .alt { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+    /* FAQ */
+    details { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin: 0 auto 10px; max-width: 760px; }
+    summary { cursor: pointer; font-weight: 600; }
+    details p { color: var(--muted); margin: 10px 0 0; }
+
+    .final { text-align: center; }
+    footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+    @media (max-width: 640px) {
+      .nav-links a.plain { display: none; }
+      .hero { padding-top: 56px; }
+      section { padding: 56px 0; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="logo" href="#"><img src="assets/icon.png" alt="" />Voice Agent</a>
+      <div class="nav-links">
+        <a class="plain" href="#features">Features</a>
+        <a class="plain" href="#faq">FAQ</a>
+        <button class="theme-toggle" id="themeToggle" aria-label="Switch light or dark theme"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+        <a class="btn btn-primary btn-small download-link" href="#download">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="download">
+    <div class="wrap">
+      <span class="eyebrow">Desktop AI agent · Windows</span>
+      <h1>Hold a key. Talk. <span>Your AI does the rest.</span></h1>
+      <p class="lead">
+        Voice Agent lives on your laptop and works across your email, calendar, files and AI tools.
+        Ask out loud, and it drafts, schedules, searches and builds for you.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary download-link" id="downloadBtn"
+           href="https://github.com/Musmanai/Voice_Updates/releases/latest/download/Voice-Agent-Setup.exe">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5 10.5 4.5v7H3zm0 13 7.5 1v-7H3zm8.5 1.2L21 21v-8.5h-9.5zm0-15.4v7.2H21V3z"/></svg>
+          Download for Windows
+        </a>
+        <a class="btn btn-ghost" href="#features">See what it does</a>
+      </div>
+      <p class="release-note" id="releaseNote">Free updates install automatically. Mac version coming soon.</p>
+
+      <div class="mock" aria-hidden="true">
+        <div class="mock-input">
+          <span class="mic"><svg viewBox="0 0 24 24" fill="var(--on-accent)"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></span>
+          “Move my 3pm with Sara to tomorrow and let her know”
+          <span class="wave"><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+        <div class="mock-body">
+          <div class="bubble bot">You’re free tomorrow at 3pm and 4:30pm. I’ll move it to 3pm and email Sara.</div>
+          <div class="confirm">
+            <small>Needs your OK · Google Calendar + Gmail</small>
+            <strong>Move “Weekly sync with Sara” → Fri 3:00pm</strong><br />
+            Email to sara@… : “Hi Sara, could we shift our sync to Friday at 3? Thanks!”
+            <div class="row">
+              <span class="btn btn-primary btn-small">Approve</span>
+              <span class="btn btn-ghost btn-small">Edit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>One assistant for all your tools</h2>
+      <p class="section-lead">Stop switching between ten tabs. Say what you need from anywhere on your computer.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></div>
+          <h3>Push to talk</h3>
+          <p>Hold one key in any app and speak. Works alongside Wispr Flow if you already use it.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div>
+          <h3>Floating command bar</h3>
+          <p>Press Ctrl+Shift+Space to ask a quick question without leaving what you’re doing.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+          <h3>Asks before it acts</h3>
+          <p>Reading is automatic. Sending, posting, deleting or spending credits always shows you a confirm card first.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+          <h3>Your keys stay on your laptop</h3>
+          <p>Use your own Claude or OpenAI API key. It’s encrypted by your operating system and never sent to us.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+          <h3>Always up to date</h3>
+          <p>New versions download in the background. Click “Restart to update” when it suits you.</p>
+        </div>
+        <div class="card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg></div>
+          <h3>Make it yours</h3>
+          <p>Light or dark theme and any accent color you like.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <h2>Works with the tools you already use</h2>
+      <p class="section-lead">Available now: chat with Claude or ChatGPT. Connections roll out in free updates.</p>
+      <div class="tools">
+        <span class="tool">Claude</span>
+        <span class="tool">ChatGPT</span>
+        <span class="tool soon">Gmail</span>
+        <span class="tool soon">Google Calendar</span>
+        <span class="tool soon">Google Drive</span>
+        <span class="tool soon">Zoom</span>
+        <span class="tool soon">Lovable</span>
+        <span class="tool soon">Higgsfield</span>
+        <span class="tool soon">n8n</span>
+        <span class="tool soon">Whop</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Up and running in two minutes</h2>
+      <p class="section-lead">No account to create with us. Bring your own AI key.</p>
+      <div class="grid steps">
+        <div class="card"><h3>Download &amp; install</h3><p>Run the installer. Voice Agent opens and sits in your system tray.</p></div>
+        <div class="card"><h3>Add your AI key</h3><p>Paste an Anthropic (Claude) or OpenAI key in Settings. We check it works before saving.</p></div>
+        <div class="card"><h3>Start talking</h3><p>Press Ctrl+Shift+Space from anywhere and ask for what you need.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="faq">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <p class="section-lead">&nbsp;</p>
+      <details>
+        <summary>Windows says “Windows protected your PC”. Is it safe?</summary>
+        <p>Windows shows this for new apps until their publisher certificate builds a reputation. Click <strong>More info</strong>, then <strong>Run anyway</strong>. A signed installer is on the way and will remove this message.</p>
+      </details>
+      <details>
+        <summary>Can I use my Claude Pro or ChatGPT Plus subscription?</summary>
+        <p>No. Those subscriptions only work in Claude’s and OpenAI’s own apps. Voice Agent uses an API key, which you create at console.anthropic.com or platform.openai.com and pay for by usage.</p>
+      </details>
+      <details>
+        <summary>Where is my data stored?</summary>
+        <p>Your conversations and settings are saved on your own computer. Your API key is encrypted with your operating system’s secure storage and is only sent to the AI provider you chose.</p>
+      </details>
+      <details>
+        <summary>Is there a Mac version?</summary>
+        <p>Yes, it’s coming soon. The Windows version is available today.</p>
+      </details>
+      <details>
+        <summary>How do updates work?</summary>
+        <p>The app checks for new versions in the background, downloads them and shows a “Restart to update” button. You can also check from Settings.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <h2>Ready to talk to your tools?</h2>
+      <p class="section-lead">Download Voice Agent for Windows.</p>
+      <a class="btn btn-primary download-link" href="https://github.com/Musmanai/Voice_Updates/releases/latest/download/Voice-Agent-Setup.exe">Download for Windows</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>© <span id="year"></span> Voice Agent</span>
+      <span><a href="https://github.com/Musmanai/Voice_Updates/releases">All releases</a></span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Theme toggle: system → light → dark, remembered on this device.
+    const root = document.documentElement;
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const dark = root.dataset.theme
+        ? root.dataset.theme === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.dataset.theme = dark ? 'light' : 'dark';
+      try { localStorage.setItem('va-theme', root.dataset.theme); } catch (e) {}
+    });
+
+    // Show the latest version, or disable the buttons until the first release exists.
+    fetch('https://api.github.com/repos/Musmanai/Voice_Updates/releases/latest', {
+      headers: { Accept: 'application/vnd.github+json' }
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((release) => {
+        const exe = (release.assets || []).find((a) => a.name.endsWith('.exe'));
+        const size = exe ? ` · ${Math.round(exe.size / 1e6)} MB` : '';
+        const date = new Date(release.published_at).toLocaleDateString(undefined, { dateStyle: 'medium' });
+        document.getElementById('releaseNote').textContent =
+          `Version ${release.tag_name.replace(/^v/, '')} · ${date}${size} · Windows 10 and 11 · Mac coming soon`;
+      })
+      .catch((status) => {
+        if (status !== 404) return; // network hiccup or rate limit: leave the links working
+        document.querySelectorAll('#downloadBtn').forEach((a) => a.setAttribute('aria-disabled', 'true'));
+        document.getElementById('releaseNote').textContent = 'The first version is being prepared. Check back soon.';
+      });
+  </script>
+</body>
+</html>
